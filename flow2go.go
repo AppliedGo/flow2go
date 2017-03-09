@@ -35,7 +35,7 @@ If you want to do Flow-Based Programming in Go, there are a couple of frameworks
 
 <!--more-->
 
-The previous article peeked into Flow-Based Programming (FBP), a paradigm that puts the flow of the data above the code that makes the data flow. An FBP application can be described as a network of loosely coupled processing nodes, only connected through data pipelines. The article's code made use of a quite sophisticated FBP library that made the magic of a convenient syntax happen through reflection (hidden within the library, but still).
+The [previous article](https://appliedgo.net/flow/) peeked into Flow-Based Programming (FBP), a paradigm that puts the flow of the data above the code that makes the data flow. An FBP application can be described as a network of loosely coupled processing nodes, only connected through data pipelines. The article's code made use of a quite sophisticated FBP library that made the magic of a convenient syntax happen through reflection (hidden within the library, but still).
 
 The article triggered a couple of comments on [Reddit](https://www.reddit.com/r/golang/comments/5wg6jm/get_into_the_flow_flowbased_programming_applied_go/) that were suggesting pure Go approaches, without using third-party libraries.
 
