@@ -78,7 +78,7 @@ I had to change this so that the printer node now has two input channels, and th
 
 Why? The reason is the network's shutdown mechanism. As described above, each node shuts down when its input channels are closed. Piece of cake, you might think, but things get difficult when a channel has multiple writers, as in the counter/printer part of our network.
 
-As you know, closing a channel closes it immediately, even for other writers. (Personally, I would prefer if, in a fan-in scenario, all writers except the last one would only close their own end of the channel rather than the whole channel at once, but this is not how channels work in Go.)
+As you know, closing a channel closes it completely, and other writers panic when trying to write to this channel. (Personally, I would prefer a fan-in semantic where all writers except the last one would only close their own end of the channel they share rather than the whole channel at once, but this is not how channels work in Go.)
 
 So we need to split every multi-writer channel into separate channels. Then we can write a `merge` function that merges all the channels into one, and also takes care of closing the output channels when the last of the input channels closes.
 
@@ -94,12 +94,10 @@ Without the `goflow` framework, we also need to add a mechanism to tell the outs
 (Side note: This behavior may seem counterintuitive and difficult to deal with, but remember that the "comma, ok" idiom can tell you if the channel has been closed.)
 
 
-## Conclusion
-
-With only some basic Go mechanisms - goroutines, channels, and a WaitGroup (in the `merge` method), we were able to re-implement the FBP network from the previous article without any third-party library. The code size increased a bit but in a manageable way that should scale quite well with the number of nodes.
-
 
 ## The code
+
+Ok, enough talking about the whats and whys, now let's dive into the code!
 */
 
 // Imports
@@ -377,6 +375,10 @@ You should see an output similar to this:
 	Letters: 36
 	Printer has finished.
 	Network has shut down.
+
+## Conclusion
+
+With only some basic Go mechanisms - goroutines, channels, and a WaitGroup (in the `merge` method), it is possible to re-implement the FBP network from the previous article without any third-party library. The code size increased a bit but in a manageable way that should scale quite well with the number of nodes.
 
 
 **Happy coding!**
