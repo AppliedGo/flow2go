@@ -50,21 +50,24 @@ I gave it a try, and here is the result.
 
 The approach is as simple as it can get:
 
-* Every node reads from one or more input channels, and writes to one or more output channels.
-* Weaving the net happens in `main()` through creating channels and connecting them to the input and output ports of the processing nodes.
-* The net starts by calling a `Process()` method on each node and feeding data into the network's input channel.
-* The net stops when the net's input channel is closed. Then every node whose input channels get closed closes his output channels and shuts down, and this way the shutdown propagates through the network until the last node (the "sink" node with no output channel) stops.
+**Data flow:** Every node reads from one or more input channels, and writes to one or more output channels.
+
+**Network construction:** Weaving the net happens in `main()` through creating channels and connecting them to the input and output ports of the processing nodes.
+
+**Starting the net:** The net starts by calling a `Process()` method on each node and feeding data into the network's input channel.
+
+**Stopping the net:** The net stops when the net's input channel is closed. Then every node whose input channels get closed closes his output channels and shuts down, and this way the shutdown propagates through the network until the last node (the "sink" node with no output channel) stops.
 
 
-## Changes to the codes
+## Changes to the code
 
 The code below is based on a 1:1 copy of the code from the previous article. Then the following changes were applied.
 
 ### Input channels
 
-The `goflow` framework takes care of the input channels, and the nodes need special "`OnXyz()`" functions that received a single channel item at a time.
+The `goflow` framework takes care of each node's input channels, and the nodes need special "`On...()`" functions that received a single channel item at a time.
 
-I changed the nodes to have their own input channels, and I replaced the `OnXyz()` methods with `Process()` methods that take no arguments and start a goroutine to read from the input channel(s) and write to the output channel(s). This is substantially more code compared to the `OnXyz()` methods that mostly were one-liners; however, in real life each node would contain much more code, and the overhead for input and output handling would be negligible.
+I changed the nodes to have their own input channels, and I replaced the `On...()` methods with `Process()` methods that take no arguments and start a goroutine to read from the input channel(s) and write to the output channel(s). This is substantially more code compared to the `On...()` methods that mostly were one-liners; however, in real life where each node would contain much more code, the overhead for input and output handling would be negligible.
 
 
 ### No more fan-in
@@ -82,11 +85,13 @@ So we need to split every multi-writer channel into separate channels. Then we c
 Or, rather than writing one, we can take a ready-made `merge()` function [from the Go blog](https://blog.golang.org/pipelines) (scroll down to "fan-out, fan-in"). With some very minor changes, the `merge` function is now a method of the `printer` node. Problem solved!
 
 
-### Signaling complete shutdown
+### Signaling shutdown completion to the outside
 
-Without the `goflow` framework, the last node of the network is responsible for signaling to the main goroutine that the network has shut down. Similar to how `goflow` does it, our `printer` node uses a simple channel of empty structs that it closes when concluding work.
+Without the `goflow` framework, we also need to add a mechanism to tell the outside that the network has shut down. This is the duty of the final node in the network. Similar to how `goflow` does it, our `printer` node closes a channel of empty structs when concluding work.
 
-When an empty, unbuffered channel is closed, it starts delivering the channels zero value. Any read operation on this channel then unblocks, and this is how we can make `main()` wait for the network to shut down.
+ An empty, unbuffered channel blocks its readers. When it is closed, however, it starts delivering the channels zero value. Any read operation on this channel then unblocks, and this is how we can make `main()` wait for the network to shut down.
+
+(Side note: This behavior may seem counterintuitive and difficult to deal with, but remember that the "comma, ok" idiom can tell you if the channel has been closed.)
 
 
 ## Conclusion
@@ -122,6 +127,7 @@ type splitter struct {
 
 // In the old code, this method was called `OnIn()` and was fed with a string via the `goflow` framework. This new method now reads the input channel directly within a goroutine. When the channel is closed and drained, the goroutine closes its output channels and exits.
 func (t *splitter) Process() {
+	fmt.Println("Splitter starts.")
 	go func() {
 		for {
 			s, ok := <-t.In
@@ -144,6 +150,7 @@ type wordCounter struct {
 
 // Previously, this function was named OnSentence, and it was a one-liner that received a string via the `goflow` framework. As with `splitter`'s `OnIn()`, let's replace it by a function that reads the input channel directly.
 func (wc *wordCounter) Process() {
+	fmt.Println("WordCounter starts.")
 	go func() {
 		for {
 			sentence, ok := <-wc.Sentence
@@ -165,6 +172,7 @@ type letterCounter struct {
 
 // As with `wordCounter`,  `letterCounter`'s `OnSentence` function also got replaced by a function that reads the input channel directly.
 func (lc *letterCounter) Process() {
+	fmt.Println("LetterCounter starts.")
 	go func() {
 		lc.Init()
 		for {
@@ -221,6 +229,7 @@ func (p *printer) merge() <-chan *count {
 
 // `printer`'s `OnLine()` method was also replaced by a `Process()` method that reads directly from the input channel.
 func (p *printer) Process() {
+	fmt.Println("Printer starts.")
 	in := p.merge()
 	go func() {
 		for {
@@ -272,6 +281,7 @@ func main() {
 	p.Done = done
 
 	// Start the nodes.
+	fmt.Println("Start the nodes.")
 	s.Process()
 	wc.Process()
 	lc.Process()
@@ -279,6 +289,7 @@ func main() {
 
 	// Now feed the network with data.
 
+	fmt.Println("Send the data into the network.")
 	in <- "I never put off till tomorrow what I can do the day after."
 	in <- "Fashion is a form of ugliness so intolerable that we have to alter it every six months."
 	in <- "Life is too important to be taken seriously."
@@ -286,6 +297,7 @@ func main() {
 	close(in)
 	// Wait until the network has shut down.
 	<-done
+	fmt.Println("Network has shut down.")
 }
 
 /*
@@ -348,21 +360,23 @@ Step 3. Run the binary.
 
 You should see an output similar to this:
 
+	Start the nodes.
+	Splitter starts.
+	WordCounter starts.
+	LetterCounter starts.
+	Printer starts.
+	Send the data into the network.
 	Splitter has finished.
+	WordCounter has finished.
 	Words: 13
 	Words: 17
 	Words: 8
-	WordCounter has finished.
 	Letters: 45
 	LetterCounter has finished.
 	Letters: 70
 	Letters: 36
 	Printer has finished.
-
-## Odds and ends
-## Some remarks
-## Tips
-## Links
+	Network has shut down.
 
 
 **Happy coding!**
