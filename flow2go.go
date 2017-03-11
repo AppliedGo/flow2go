@@ -198,7 +198,7 @@ type printer struct {
 
 // As we now have two input channels, we need to merge them into one.
 // For this we use a slightly modified version of the `merge` function
-// from the [Go blog](https://blog.golang.org/pipelines).
+// from the [Go blog](https://blog.golang.org/pipelines#TOC_4.).
 func (p *printer) merge() <-chan *count {
 	var wg sync.WaitGroup
 	out := make(chan *count)
