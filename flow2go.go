@@ -23,11 +23,11 @@ title = "Flow To Go"
 description = "Flow Based Programming in pure Go"
 author = "Christoph Berger"
 email = "chris@appliedgo.net"
-date = "2017-03-09"
-publishdate = "2017-03-09"
-draft = "true"
+date = "2017-03-11"
+publishdate = "2017-03-11"
+draft = "false"
 domains = ["Concurrent Programming"]
-tags = ["fbp", "flow-based programming", "dataflow"]
+tags = ["FBP", "flow-based programming", "dataflow"]
 categories = ["Tutorial"]
 +++
 
@@ -303,50 +303,52 @@ func main() {
 And that's it! For more complex networks, you can always define an interface like this...
 
 ```go
-type Processor interface {
+type processor interface {
 	Process()
 }
 ```
 
-...and create a network from the nodes...
+...then define a network...
 
 ```go
-type counterNet struct {
-	processors map[string]Processor
-}
+type counterNet map[string]processor
+```
 
-// ...
+...and in `main()`, create the network from the nodes`...
 
-net := &counterNet{
-	"splitter": s,
-	"wordCounter": w,
+```go
+net := counterNet{
+	"splitter": &splitter{
+		In:   in,
+		Out1: sToWc,
+		Out2: sToLc,
+	},
+	"wordCounter": &wordCounter{
+		Sentence: sToWc,
+		Count:    wcToP,
+	},
 	// ...
 }
-
-// ...
-
-net["splitter"].In = in
-net["splitter"].Out1 = sToWc
-// ...
-
 ```
 
 ...and then start all nodes within a loop (thanks to the interface defined above):
 
 ```go
-
 for node := range net {
 	net[node].Process()
 }
 ```
 
+When you `go get` the code (see below), an extra file with a runnable interface version of the code is included (`interfaceVersion/flow2goWithInterface.go`).
 
 ## How to get and run the code
 
-Step 1: `go get` the code. Note the `-d` flag that prevents auto-installing
-the binary into `$GOPATH/bin`.
+Step 1: `go get` the code. Two notes here:
 
-    go get -d github.com/appliedgo/flow2go
+* Use the `-d` flag to prevent auto-installing the binary into `$GOPATH/bin`.
+* Ensure to include the ellipsis (...) at the end to also fetch the alternate versions in the subdirectories `goflowVersion` (from the previous article) and `interfaceVersion` (see above).
+
+    go get -d github.com/appliedgo/flow2go/...
 
 Step 2: `cd` to the source code directory.
 
