@@ -72,7 +72,7 @@ I changed the nodes to have their own input channels, and I replaced the `On...(
 
 ### No more fan-in
 
-The original code used one channel between the two counter nodes and the printer node. Go channels trivially support a fan-in scenario with multiple writers and one reader.
+The original code used one channel between the two counter nodes and the printer node. Go channels trivially support a fan-in scenario with multiple writers and one reader on the same channel.
 
 I had to change this so that the printer node now has two input channels, and the two counter nodes do not share the same output channel anymore but send their results into separate channels.
 
@@ -82,7 +82,7 @@ As you know, closing a channel closes it completely, and other writers panic whe
 
 So we need to split every multi-writer channel into separate channels. Then we can write a `merge` function that merges all the channels into one, and also takes care of closing the output channels when the last of the input channels closes.
 
-Or, rather than writing one, we can take a ready-made `merge()` function [from the Go blog](https://blog.golang.org/pipelines) (scroll down to "fan-out, fan-in"). With some very minor changes, the `merge` function is now a method of the `printer` node. Problem solved!
+Or, rather than writing one, we can take a ready-made `merge()` function [from the Go blog](https://blog.golang.org/pipelines#TOC_4.) With some very minor changes, the `merge` function is now a method of the `printer` node. Problem solved!
 
 
 ### Signaling shutdown completion to the outside
@@ -314,7 +314,7 @@ type processor interface {
 type counterNet map[string]processor
 ```
 
-...and in `main()`, create the network from the nodes`...
+...and in `main()`, create the network from the nodes...
 
 ```go
 net := counterNet{
