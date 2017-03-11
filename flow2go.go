@@ -91,8 +91,7 @@ Without the `goflow` framework, we also need to add a mechanism to tell the outs
 
  An empty, unbuffered channel blocks its readers. When it is closed, however, it starts delivering the channels zero value. Any read operation on this channel then unblocks, and this is how we can make `main()` wait for the network to shut down.
 
-(Side note: This behavior may seem counterintuitive and difficult to deal with, but remember that the "comma, ok" idiom can tell you if the channel has been closed.)
-
+(Side note: This behavior may seem counterintuitive and difficult to deal with, but remember that the ["comma, ok" idiom for the receive operator](https://golang.org/ref/spec#Receive_operator) tells you if the channel has been closed.)
 
 
 ## The code
