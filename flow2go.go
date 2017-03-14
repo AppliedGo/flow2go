@@ -347,7 +347,9 @@ Step 1: `go get` the code. Two notes here:
 * Use the `-d` flag to prevent auto-installing the binary into `$GOPATH/bin`.
 * Ensure to include the ellipsis (...) at the end to also fetch the alternate versions in the subdirectories `goflowVersion` (from the previous article) and `interfaceVersion` (see above).
 
-    go get -d github.com/appliedgo/flow2go/...
+```
+go get -d github.com/appliedgo/flow2go/...
+```
 
 Step 2: `cd` to the source code directory.
 
