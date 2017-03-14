@@ -351,7 +351,7 @@ Step 1: `go get` the code. Two notes here:
 
 Step 2: `cd` to the source code directory.
 
-    cd $GOPATH/github.com/appliedgo/flow2go
+    cd $GOPATH/src/github.com/appliedgo/flow2go
 
 Step 3. Run the binary.
 
