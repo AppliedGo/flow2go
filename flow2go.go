@@ -26,9 +26,9 @@ email = "chris@appliedgo.net"
 date = "2017-03-11"
 publishdate = "2017-03-11"
 draft = "false"
-domains = ["Concurrent Programming"]
+categories = ["Concurrent Programming"]
 tags = ["FBP", "flow-based programming", "dataflow"]
-categories = ["Tutorial"]
+articletypes = ["Tutorial"]
 +++
 
 If you want to do Flow-Based Programming in Go, there are a couple of frameworks and libraries available. Or you simply do it with pure Go. After all, how difficult can it be?
